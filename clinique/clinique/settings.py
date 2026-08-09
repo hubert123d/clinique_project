@@ -35,15 +35,13 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', '
 
 # Hôtes autorisés : liste séparée par des virgules dans DJANGO_ALLOWED_HOSTS.
 ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-    if h.strip()
+    'clinique-project.onrender.com', 'localhost', '127.0.0.1', '*'
 ]
 
 # Origines de confiance pour CSRF (https://mondomaine.com), séparées par des virgules.
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
-    for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://clinique-project.onrender.com').split(',')
     if o.strip()
 ]
 

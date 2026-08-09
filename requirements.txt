@@ -2,7 +2,7 @@
 # Installation : pip install -r requirements.txt
 
 # Framework
-Django==6.0.5
+Django==5.0
 
 # Données de fuseaux horaires (requis pour TIME_ZONE sur Windows
 # et les images Linux « slim » sans base tz système)

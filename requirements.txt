@@ -22,3 +22,6 @@ gunicorn
 
 # Gestion des fichiers statiques et images sur Render
 whitenoise
+
+dj-database-url
+psycopg2-binary

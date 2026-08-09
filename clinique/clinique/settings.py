@@ -21,16 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# En production, définir DJANGO_SECRET_KEY dans l'environnement.
-# La clé ci-dessous n'est qu'un repli pour le développement local
-# (elle est publique : à régénérer pour toute mise en production).
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'django-insecure-j21hp%)ox2zmbqe@nh!oja$))0ta(^)eenuuu56tur#4oeko-2',
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Mettre DJANGO_DEBUG=False en production.
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
 
 # Hôtes autorisés : liste séparée par des virgules dans DJANGO_ALLOWED_HOSTS.
@@ -38,7 +34,7 @@ ALLOWED_HOSTS = [
     'clinique-project.onrender.com', 'localhost', '127.0.0.1', '*'
 ]
 
-# Origines de confiance pour CSRF (https://mondomaine.com), séparées par des virgules.
+# Origines de confiance pour CSRF
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
     for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://clinique-project.onrender.com').split(',')
@@ -65,6 +61,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # <-- Indispensable pour servir les images sur Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -129,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fr-fr'
 
-# Fuseau horaire local (surcharger via DJANGO_TIME_ZONE si besoin).
+# Fuseau horaire local
 TIME_ZONE = os.environ.get('DJANGO_TIME_ZONE', 'Africa/Bamako')
 
 USE_I18N = True
@@ -140,32 +137,37 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-# Destination de `collectstatic` en production.
+STATIC_URL = '/static/'
+# Destination de `collectstatic` en production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Emplacement de vos images de fond, CSS et scripts
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# Gestion du stockage statique avec WhiteNoise
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # Fichiers téléversés par les utilisateurs (photos patients, scans, etc.)
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 
-# ─────────────────────────────────────────────────────────────
-# Sessions — gère la case « Se souvenir de moi » au login.
-# Par défaut la session expire à la fermeture du navigateur ;
-# la vue de connexion prolonge la session à 30 jours si la case
-# est cochée (voir comptes.views.ConnexionView).
-# ─────────────────────────────────────────────────────────────
+# Sessions
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 jours (utilisé quand « se souvenir » est coché)
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 jours
 
-# ─────────────────────────────────────────────────────────────
-# Email — réinitialisation du mot de passe oublié (Gmail SMTP).
-# Le mot de passe d'application Gmail NE DOIT PAS être en clair ici :
-# il est lu depuis la variable d'environnement GMAIL_APP_PASSWORD,
-# ou depuis clinique/clinique/local_settings.py (non versionné).
-# ─────────────────────────────────────────────────────────────
+# Email (Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -173,36 +175,25 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('GMAIL_USER', 'nanadiawra15@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'Clinique Nevroglie <%s>' % EMAIL_HOST_USER
-PASSWORD_RESET_TIMEOUT = 60 * 60 * 24  # le lien de réinitialisation est valable 24 h
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24  # 24 h
 
-# ─────────────────────────────────────────────────────────────
-# Durcissement de sécurité — actif uniquement hors DEBUG (production).
-# En dev (DEBUG=True), ces réglages restent désactivés pour ne pas
-# casser l'accès en http://localhost.
-# ─────────────────────────────────────────────────────────────
+# Durcissement de sécurité en production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True          # force le HTTPS
-    SESSION_COOKIE_SECURE = True        # cookie de session en HTTPS uniquement
-    CSRF_COOKIE_SECURE = True           # cookie CSRF en HTTPS uniquement
-    SECURE_HSTS_SECONDS = 31536000      # HSTS : 1 an
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True  # anti MIME-sniffing
+    SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    X_FRAME_OPTIONS = 'DENY'            # anti clickjacking
+    X_FRAME_OPTIONS = 'DENY'
 
-# ─────────────────────────────────────────────────────────────
-# Stripe — paiement par carte bancaire SIMULÉ (mode test).
-# Créer un compte sur dashboard.stripe.com puis copier les clés de test
-# (pk_test_… / sk_test_…) depuis dashboard.stripe.com/test/apikeys,
-# via variables d'environnement ou local_settings.py (non versionné).
-# Carte de test « paiement réussi » : 4242 4242 4242 4242,
-# CVC quelconque (ex. 123), date d'expiration future (ex. 12/29).
-# ─────────────────────────────────────────────────────────────
+# Stripe
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 
-# Surcharges locales non versionnées (ex. EMAIL_HOST_PASSWORD).
+# Surcharges locales non versionnées
 try:
     from .local_settings import *  # noqa: F401,F403
 except ImportError:
